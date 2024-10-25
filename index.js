@@ -1,6 +1,7 @@
 // Import chrome-launcher and puppeteer
 import * as chromeLauncher from "chrome-launcher";
 import puppeteer from "puppeteer-core";
+import { automateLinkedInUpdate } from "./scripts/linkedinAutomation.js";
 
 // Helper function to add delay
 function delay(ms) {
@@ -29,8 +30,8 @@ function getChromePath() {
   try {
     // Launch Chrome with necessary flags
     const chrome = await chromeLauncher.launch({
+      defaultViewport: null,
       chromeFlags: [
-        "--headless",
         "--no-sandbox", // Disable sandboxing for compatibility
         "--disable-gpu", // Disable GPU rendering
         "--disable-dev-shm-usage", // Avoid shared memory issues
@@ -47,6 +48,7 @@ function getChromePath() {
     });
 
     const page = await browser.newPage();
+    await automateLinkedInUpdate(page);
     await page.goto("https://subbu.cloud/");
 
     await delay(10000);
