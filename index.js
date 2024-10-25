@@ -32,6 +32,7 @@ function getChromePath() {
     const chrome = await chromeLauncher.launch({
       defaultViewport: null,
       chromeFlags: [
+        "--headless",
         "--no-sandbox", // Disable sandboxing for compatibility
         "--disable-gpu", // Disable GPU rendering
         "--disable-dev-shm-usage", // Avoid shared memory issues
