@@ -10,11 +10,13 @@ function delay(ms) {
     // Launch Chrome with necessary flags
     const chrome = await chromeLauncher.launch({
       chromeFlags: [
+        "--headless",
         "--no-sandbox", // Disable sandboxing for compatibility
         "--disable-gpu", // Disable GPU rendering
         "--disable-dev-shm-usage", // Avoid shared memory issues
         "--disable-setuid-sandbox",
       ],
+      chromePath: process.env.CHROME_PATH || "/usr/bin/chromium-browser",
     });
 
     console.log(`Chrome launched on port: ${chrome.port}`);
