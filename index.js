@@ -45,3 +45,7 @@ app.post("/start-linkedin-update", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+app.get("/", (req, res) => {
+  return res.send(`<h1>You are on the Home Page of Auto Updator Server</h1>`);
+});
