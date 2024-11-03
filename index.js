@@ -1,65 +1,47 @@
-// Import chrome-launcher and puppeteer
 import * as chromeLauncher from "chrome-launcher";
 import puppeteer from "puppeteer-core";
-import { automateLinkedInUpdate } from "./scripts/linkedinAutomation.js";
+import { automateLinkedInUpdate } from "./scripts/linkedinAutomation2.js";
+import { browserConfig } from "./config/puppeteerConfig.js";
 
-// Helper function to add delay
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { Server } from "socket.io";
+import express from "express";
+import cors from "cors";
 
-// Determine the Chrome path based on environment (AWS vs. Local PC)
-function getChromePath() {
-  // Use the environment variable if provided
-  if (process.env.CHROME_PATH) {
-    return process.env.CHROME_PATH;
-  }
+const app = express();
+app.use(cors({ origin: "*" }));
 
-  // Default paths for different platforms
-  const platform = process.platform;
-  if (platform === "win32")
-    return "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-  if (platform === "darwin")
-    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-  if (platform === "linux") return "/usr/bin/chromium-browser";
+const server = app.listen(3001, () =>
+  console.log("Server running on port 3001")
+);
 
-  throw new Error(`Unsupported platform: ${platform}`);
-}
+const io = new Server(server, {
+  // Use Server to initialize socket.io
+  cors: {
+    origin: "*", // Allow requests from frontend
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  },
+});
 
-(async () => {
+app.post("/start-linkedin-update", async (req, res) => {
+  io.emit("status", "Starting LinkedIn automation...");
   try {
-    // Launch Chrome with necessary flags
-    const chrome = await chromeLauncher.launch({
-      defaultViewport: null,
-      chromeFlags: [
-        "--headless",
-        "--no-sandbox", // Disable sandboxing for compatibility
-        "--disable-gpu", // Disable GPU rendering
-        "--disable-dev-shm-usage", // Avoid shared memory issues
-        "--disable-setuid-sandbox",
-      ],
-      chromePath: getChromePath(), // Use the dynamic Chrome path
-    });
-
-    console.log(`Chrome launched on port: ${chrome.port}`);
-
-    // Connect Puppeteer to the launched Chrome instance
+    const chrome = await chromeLauncher.launch(browserConfig);
     const browser = await puppeteer.connect({
-      browserURL: `http://localhost:${chrome.port}`, // Use the port from chrome-launcher
+      browserURL: `http://localhost:${chrome.port}`,
     });
 
     const page = await browser.newPage();
-    await automateLinkedInUpdate(page);
-    await page.goto("https://subbu.cloud/");
-
-    await delay(10000);
-    const title = await page.title();
-    console.log(`Page Title: ${title}`);
+    await automateLinkedInUpdate(page, io); // Pass io to automation function
 
     await browser.disconnect();
-    await chrome.kill(); // Clean up
+    await chrome.kill();
+
+    io.emit("status", "Automation complete.");
+    res.json({ success: true });
   } catch (error) {
-    console.error("Error launching Chrome or Puppeteer:", error);
-    process.exit(1); // Optional: exit process with failure status
+    io.emit("status", `Error: ${error.message}`);
+    res.status(500).json({ success: false, error: error.message });
   }
-})();
+});
