@@ -46,6 +46,10 @@ app.post("/start-linkedin-update", async (req, res) => {
   }
 });
 
+app.post("/dummy-post", async (req, res) => {
+  res.json({ success: true, message: "Dummy Post working" });
+});
+
 app.get("/", (req, res) => {
   return res.send(`<h1>You are on the Home Page of Auto Updator Server</h1>`);
 });
