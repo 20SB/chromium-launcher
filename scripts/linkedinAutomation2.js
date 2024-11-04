@@ -74,10 +74,37 @@ export async function automateLinkedInUpdate(page, io) {
     io.emit("pageContent", await page.evaluate(() => document.body.innerHTML));
     await takeScreenshot(page, io);
 
+    // io.emit("status", "Submitting login form...");
+    // console.log("Submitting login form...");
+    // await page.click(".btn__primary--large");
+    // await page.waitForNavigation();
+    // io.emit("pageContent", await page.evaluate(() => document.body.innerHTML));
+    // await takeScreenshot(page, io);
+
     io.emit("status", "Submitting login form...");
     console.log("Submitting login form...");
     await page.click(".btn__primary--large");
-    await page.waitForNavigation();
+
+    try {
+      await page.waitForNavigation();
+    } catch (error) {
+      // If an error occurs (e.g., due to 2FA), handle it here
+      console.error("Navigation failed:", error.message);
+      io.emit(
+        "status",
+        "Navigation failed, handling two-factor authentication..."
+      );
+
+      // Send a screenshot of the current page
+      await takeScreenshot(page, io);
+
+      // Optionally, you can handle the two-factor authentication logic here
+      // e.g., waiting for user input or further actions
+
+      // Wait for navigation, with a timeout of 10 minutes (600000 ms) to give 10 min window to accept in mobile
+      await page.waitForNavigation({ timeout: 600000 });
+    }
+
     io.emit("pageContent", await page.evaluate(() => document.body.innerHTML));
     await takeScreenshot(page, io);
 
